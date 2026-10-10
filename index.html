@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>IPadd Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #edf0f3; --panel: #ffffff; --panel2: #e3e8ed; --ink: #121c26; --muted: #566574; --line: #cfd7df;
+  --accent: #d9480f; --accent-ink: #ffffff; --mine: #d6ebee; --ok: #0f7b6c;
+  --font-display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0e141a; --panel: #151d25; --panel2: #1c2630; --ink: #e6edf3; --muted: #8fa1b2; --line: #28343f; --accent: #ff8a4c; --accent-ink: #1a0e05; --mine: #1b3b42; --ok: #3ecfb2; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.45; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+#join { min-height: 100%; display: flex; flex-direction: column; align-items: center; padding: 6vh 16px 32px; gap: 28px; }
+.brand, .card, .how { width: 100%; max-width: 440px; }
+.wordmark { font-family: var(--font-display); font-weight: 700; font-size: clamp(2.4rem, 9vw, 3.4rem); letter-spacing: -0.02em; line-height: 1; margin: 0; }
+.wordmark span { color: var(--accent); }
+.tag { margin: 10px 0 0; color: var(--muted); font-size: 1.05rem; text-wrap: balance; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 20px; display: grid; gap: 16px; }
+.field { display: grid; gap: 6px; min-width: 0; }
+.field label { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.field input { width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 11px 12px; min-width: 0; }
+.field input.mono { font-family: var(--font-mono); font-size: 1.05rem; }
+.hint { font-size: 0.82rem; color: var(--muted); margin: 0; }
+.btn { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 4px; padding: 12px 16px; font-weight: 600; letter-spacing: 0.02em; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); font-weight: 500; }
+.examples { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.examples small { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.chip { font-family: var(--font-mono); font-size: 0.85rem; background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; padding: 4px 9px; }
+.chip:hover { border-color: var(--accent); }
+.how { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; color: var(--muted); font-size: 0.92rem; }
+.how b { color: var(--ink); font-weight: 600; }
+#joinErr { color: var(--accent); font-size: 0.85rem; min-height: 1.2em; margin: 0; }
+
+#chat { height: 100%; display: grid; grid-template-columns: 250px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+header.bar { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px; background: var(--panel); border-bottom: 1px solid var(--line); min-width: 0; }
+.bar .room { flex: 1; min-width: 0; }
+.room .k { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: block; }
+.room .addr { font-family: var(--font-mono); font-size: 1.1rem; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.online { font-family: var(--font-mono); font-size: 0.8rem; color: var(--ok); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.online i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); display: inline-block; }
+.online.off { color: var(--muted); } .online.off i { background: var(--muted); }
+.iconbtn { background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; padding: 7px 10px; font-size: 0.85rem; white-space: nowrap; }
+#menuBtn { display: none; }
+aside.members { background: var(--panel); border-right: 1px solid var(--line); padding: 14px 16px; overflow-y: auto; min-height: 0; }
+aside h2 { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; font-weight: 500; }
+.mlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.mlist li { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.mlist .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; }
+.mlist .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mlist .you { font-family: var(--font-mono); font-size: 0.68rem; color: var(--muted); }
+.leave { margin-top: 18px; width: 100%; }
+main.pane { display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; min-height: 0; min-width: 0; }
+#banner { background: var(--panel2); color: var(--muted); font-size: 0.82rem; padding: 7px 16px; border-bottom: 1px solid var(--line); }
+#msgs { overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 4px; min-height: 0; }
+.start { align-self: center; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 6px 0 12px; text-align: center; }
+.m { max-width: min(560px, 88%); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 7px 11px; align-self: flex-start; position: relative; min-width: 0; }
+.m.me { align-self: flex-end; background: var(--mine); }
+.m.first { margin-top: 10px; }
+.m .who { font-size: 0.78rem; font-weight: 600; display: flex; gap: 8px; align-items: baseline; }
+.m .who time { font-family: var(--font-mono); font-weight: 400; color: var(--muted); font-size: 0.7rem; }
+.m .txt { overflow-wrap: anywhere; white-space: pre-wrap; }
+.m .quote { border-left: 3px solid var(--accent); padding: 2px 8px; margin: 4px 0; color: var(--muted); font-size: 0.82rem; overflow-wrap: anywhere; }
+.m .quote b { color: var(--ink); font-weight: 600; }
+.m .rep { position: absolute; top: 4px; right: 4px; background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; font-size: 0.9rem; opacity: 0; line-height: 1.5; }
+.m:hover .rep, .m .rep:focus-visible { opacity: 1; }
+@media (hover: none) { .m .rep { opacity: 0.7; } }
+#replyBar { display: flex; align-items: center; gap: 10px; padding: 7px 16px; background: var(--panel2); border-top: 1px solid var(--line); font-size: 0.85rem; min-width: 0; }
+#replyBar .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+#replyBar .t b { color: var(--ink); }
+form.composer { display: flex; gap: 8px; padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); background: var(--panel); border-top: 1px solid var(--line); }
+form.composer input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 11px 12px; }
+#toast { position: fixed; left: 50%; bottom: calc(80px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 4px; font-size: 0.85rem; max-width: calc(100% - 32px); z-index: 10; }
+@media (max-width: 720px) {
+  #chat { grid-template-columns: minmax(0, 1fr); }
+  #menuBtn { display: inline-block; }
+  aside.members { position: fixed; inset: 0 auto 0 0; width: min(280px, 85%); z-index: 5; transform: translateX(-102%); transition: transform 0.18s ease; padding-top: calc(14px + env(safe-area-inset-top, 0px)); box-shadow: 4px 0 24px rgba(0,0,0,0.25); }
+  #chat.drawer aside.members { transform: none; }
+  .m { max-width: 92%; }
+}
+@media (prefers-reduced-motion: reduce) { aside.members { transition: none; } }
+</style>
+</head>
+<body>
+<div id="join">
+  <div class="brand">
+    <h1 class="wordmark">IPadd<span>.</span>Chat</h1>
+    <p class="tag">Same address, same room. Enter an IP address and talk to everyone who entered it too.</p>
+  </div>
+  <form class="card" id="joinForm" autocomplete="off">
+    <div class="field">
+      <label for="uName">Username</label>
+      <input id="uName" maxlength="24" placeholder="Your name" required>
+    </div>
+    <div class="field">
+      <label for="uAddr">IP address (room code)</label>
+      <input id="uAddr" class="mono" maxlength="60" placeholder="192.168.0.1" required>
+      <p class="hint">Everyone who enters the same address joins the same room.</p>
+    </div>
+    <div class="examples"><small>Try</small>
+      <button type="button" class="chip" data-a="192.168.0.1">192.168.0.1</button>
+      <button type="button" class="chip" data-a="10.0.0.1">10.0.0.1</button>
+      <button type="button" class="chip" data-a="127.0.0.1">127.0.0.1</button>
+      <button type="button" class="chip" id="myIp">Use my IP</button>
+    </div>
+    <p id="joinErr" role="alert"></p>
+    <button class="btn" id="joinBtn" type="submit">Connect</button>
+  </form>
+  <ol class="how">
+    <li><b>Pick an address.</b> Type any IP-style address, or tap "Use my IP" so everyone on your network lands together.</li>
+    <li><b>Talk live.</b> Messages reach everyone in the room instantly. New arrivals see the last 100 messages.</li>
+    <li><b>Rooms are open.</b> Anyone who types the same address can read the room, so use an unusual address for private chats.</li>
+  </ol>
+</div>
+
+<div id="chat" hidden>
+  <header class="bar">
+    <button class="iconbtn" id="menuBtn" type="button" aria-label="Show members">☰</button>
+    <div class="room"><span class="k">Room</span><span class="addr" id="roomAddr">-</span></div>
+    <span class="online" id="onlineWrap"><i></i><span id="onlineN">1 online</span></span>
+    <button class="iconbtn" id="copyBtn" type="button">Copy address</button>
+    <button class="iconbtn" id="clearBtn" type="button" title="Hides earlier messages on your screen only">Clear</button>
+  </header>
+  <aside class="members">
+    <h2>Members</h2>
+    <ul class="mlist" id="mlist"></ul>
+    <button class="btn ghost leave" id="leaveBtn" type="button">← Leave room</button>
+  </aside>
+  <main class="pane">
+    <div id="banner" hidden></div>
+    <div id="msgs" aria-live="polite"></div>
+    <div id="replyBar" hidden><span class="t" id="replyTxt"></span><button class="iconbtn" id="replyX" type="button" aria-label="Cancel reply">✕</button></div>
+    <form class="composer" id="composer" autocomplete="off">
+      <input id="msgIn" maxlength="500" placeholder="Write a message" aria-label="Message">
+      <button class="btn" type="submit">Send</button>
+    </form>
+  </main>
+</div>
+<div id="toast" hidden></div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var S = { es: null, id: null, name: "", addr: "", members: [], msgs: [], clearedAt: 0, reply: null };
+
+  function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) {} return null; }
+  function toast(t) { var el = $("toast"); el.textContent = t; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function () { el.hidden = true; }, 3200); }
+  function hhmm(ts) { return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
+
+  $("uName").value = store("ipadd.name") || "";
+  $("uAddr").value = store("ipadd.addr") || "";
+  document.querySelectorAll(".chip[data-a]").forEach(function (c) { c.addEventListener("click", function () { $("uAddr").value = c.dataset.a; $("uAddr").focus(); }); });
+  $("myIp").addEventListener("click", function () {
+    fetch("/api/myip").then(function (r) { return r.json(); }).then(function (d) {
+      if (d && d.ip) { $("uAddr").value = d.ip; $("joinErr").textContent = ""; } else throw 0;
+    }).catch(function () { $("joinErr").textContent = "Could not detect your IP."; });
+  });
+
+  $("joinForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var name = $("uName").value.trim(), addr = $("uAddr").value.trim();
+    if (!name) { $("joinErr").textContent = "Enter a username."; return; }
+    if (!addr) { $("joinErr").textContent = "Enter an address."; return; }
+    $("joinErr").textContent = "";
+    store("ipadd.name", name); store("ipadd.addr", addr);
+    connect(name, addr);
+  });
+
+  function setOnline(ok) { $("onlineWrap").classList.toggle("off", !ok); }
+
+  function connect(name, addr) {
+    disconnect();
+    S.name = name; S.addr = addr; S.msgs = []; S.members = []; S.clearedAt = 0; S.id = null;
+    $("joinBtn").disabled = true;
+    var url = "/api/join?room=" + encodeURIComponent(addr) + "&name=" + encodeURIComponent(name);
+    var es = new EventSource(url);
+    S.es = es;
+    es.addEventListener("hello", function (ev) {
+      var d = JSON.parse(ev.data);
+      S.id = d.id; S.members = d.members; S.msgs = d.history;
+      $("joinBtn").disabled = false;
+      $("roomAddr").textContent = addr;
+      $("join").hidden = true; $("chat").hidden = false;
+      $("banner").hidden = true; setOnline(true);
+      renderMembers(); renderMsgs(true); setReply(null);
+      $("msgIn").focus();
+    });
+    es.addEventListener("members", function (ev) { S.members = JSON.parse(ev.data).members; renderMembers(); });
+    es.addEventListener("msg", function (ev) { S.msgs.push(JSON.parse(ev.data)); if (S.msgs.length > 300) S.msgs.shift(); renderMsgs(false); });
+    es.onerror = function () {
+      $("joinBtn").disabled = false;
+      if (!S.id && $("chat").hidden) { $("joinErr").textContent = "Could not connect. Check the address and try again."; es.close(); S.es = null; return; }
+      setOnline(false); $("banner").hidden = false; $("banner").textContent = "Connection lost. Reconnecting...";
+    };
+  }
+  function disconnect() { if (S.es) { try { S.es.close(); } catch (e) {} S.es = null; } }
+
+  $("leaveBtn").addEventListener("click", function () { disconnect(); S.id = null; $("chat").classList.remove("drawer"); $("chat").hidden = true; $("join").hidden = false; });
+  $("menuBtn").addEventListener("click", function () { $("chat").classList.toggle("drawer"); });
+  $("msgs").addEventListener("click", function () { $("chat").classList.remove("drawer"); });
+  $("clearBtn").addEventListener("click", function () { S.clearedAt = Date.now(); renderMsgs(true); toast("Cleared on your screen. Others still see the history."); });
+  $("copyBtn").addEventListener("click", function () {
+    try { navigator.clipboard.writeText(S.addr).then(function () { toast("Address copied"); }, function () { toast("Address: " + S.addr); }); } catch (e) { toast("Address: " + S.addr); }
+  });
+
+  function renderMembers() {
+    var ul = $("mlist"); ul.textContent = "";
+    S.members.forEach(function (m) {
+      var li = document.createElement("li");
+      var d = document.createElement("span"); d.className = "dot";
+      var n = document.createElement("span"); n.className = "nm"; n.textContent = m.name;
+      li.appendChild(d); li.appendChild(n);
+      if (m.id === S.id) { var y = document.createElement("span"); y.className = "you"; y.textContent = "you"; li.appendChild(y); }
+      ul.appendChild(li);
+    });
+    $("onlineN").textContent = S.members.length + " online";
+  }
+
+  function renderMsgs(forceBottom) {
+    var box = $("msgs");
+    var near = forceBottom || box.scrollHeight - box.scrollTop - box.clientHeight < 80;
+    box.textContent = "";
+    var s = document.createElement("div"); s.className = "start"; s.textContent = "Start of conversation"; box.appendChild(s);
+    var last = null;
+    S.msgs.filter(function (m) { return m.ts > S.clearedAt; }).forEach(function (m) {
+      var el = document.createElement("div");
+      el.className = "m" + (m.from === S.id ? " me" : "") + (m.name !== last ? " first" : "");
+      if (m.name !== last) {
+        var w = document.createElement("div"); w.className = "who";
+        var nm = document.createElement("span"); nm.textContent = m.name;
+        var t = document.createElement("time"); t.textContent = hhmm(m.ts);
+        w.appendChild(nm); w.appendChild(t); el.appendChild(w);
+      }
+      last = m.name;
+      if (m.reply) {
+        var q = document.createElement("div"); q.className = "quote";
+        var qb = document.createElement("b"); qb.textContent = m.reply.name;
+        q.appendChild(qb); q.appendChild(document.createTextNode(" " + m.reply.text)); el.appendChild(q);
+      }
+      var tx = document.createElement("div"); tx.className = "txt"; tx.textContent = m.text; el.appendChild(tx);
+      var r = document.createElement("button"); r.type = "button"; r.className = "rep"; r.textContent = "↩"; r.setAttribute("aria-label", "Reply");
+      r.addEventListener("click", function (ev) { ev.stopPropagation(); setReply({ name: m.name, text: m.text }); });
+      el.appendChild(r); box.appendChild(el);
+    });
+    if (near) box.scrollTop = box.scrollHeight;
+  }
+
+  function setReply(r) {
+    S.reply = r; $("replyBar").hidden = !r;
+    if (r) {
+      var t = $("replyTxt"); t.textContent = "";
+      var b = document.createElement("b"); b.textContent = r.name;
+      t.appendChild(document.createTextNode("Replying to ")); t.appendChild(b); t.appendChild(document.createTextNode(": " + r.text.slice(0, 80)));
+      $("msgIn").focus();
+    }
+  }
+  $("replyX").addEventListener("click", function () { setReply(null); });
+
+  $("composer").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var inp = $("msgIn"), text = inp.value.trim();
+    if (!text || !S.id) return;
+    var rp = S.reply;
+    inp.value = ""; setReply(null);
+    fetch("/api/send", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: S.id, text: text, reply: rp }) })
+      .then(function (r) {
+        if (!r.ok) { inp.value = text; if (rp) setReply(rp); toast(r.status === 429 ? "Slow down a little." : "Message not sent. Reconnecting..."); }
+      })
+      .catch(function () { inp.value = text; toast("Message not sent. Check your connection."); });
+  });
+})();
+</script>
+</body>
+</html>
